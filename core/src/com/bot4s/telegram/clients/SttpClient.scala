@@ -13,6 +13,7 @@ import io.circe.parser.parse
 import io.circe.{Decoder, Encoder}
 import com.typesafe.scalalogging.StrictLogging
 
+import scala.util.Try
 import scala.concurrent.duration._
 
 /** Sttp HTTP client.
@@ -76,8 +77,6 @@ class SttpClient[F[_]](token: String, telegramHost: String = "api.telegram.org")
       .response(asJson[Response[R]])
       .send[F]()
 
-    response
-      .map(_.unsafeBody)
-      .map(processApiResponse[R])
+    monadError.flatMap(monadError.map(response)(_.unsafeBody))(t => monadError.fromTry(Try(processApiResponse[R](t))))
   }
 }
